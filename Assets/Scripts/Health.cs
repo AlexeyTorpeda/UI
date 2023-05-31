@@ -1,65 +1,37 @@
-using System.Collections;
 using UnityEngine;
 
 public class Health : MonoBehaviour
 {
-    private const float MaxHealth = 100f;
-    private const float MinHealth = 0f;
-    private const float HealthChangeDelay = 0.3f;
+    private float _maxHealth = 100f;
+    private float _minHealth = 0f;
 
-    private float _currentHealth = MaxHealth;
+    private float _currentHealth;
 
-    public delegate void HealthChanged(float currentHealth, float maxHealth);
-    public event HealthChanged OnHealthChanged;
+    public delegate void OnHealthChanged(float currentHealth, float maxHealth);
+    public event OnHealthChanged HealthChanged;
 
     private void Start()
     {
-        UpdateHealthBar();
+        _currentHealth = _maxHealth;
     }
 
     public void Heal(float amount)
     {
-        StartCoroutine(ChangeHealth(amount));
+        _currentHealth += amount;
+
+        if (_currentHealth > _maxHealth)
+            _currentHealth = _maxHealth;
+
+        HealthChanged?.Invoke(_currentHealth, _maxHealth);
     }
 
     public void Damage(float amount)
     {
-        StartCoroutine(ChangeHealth(-amount));
-    }
+        _currentHealth -= amount;
 
-    private IEnumerator ChangeHealth(float amount)
-    {
-        if (amount != 0)
-        {
-            float targetHealth = Mathf.Clamp(_currentHealth + amount, MinHealth, MaxHealth);
-            float startTime = Time.time;
-            float endTime = startTime + HealthChangeDelay;
+        if (_currentHealth < _minHealth)
+            _currentHealth = _minHealth;
 
-            while (Time.time < endTime)
-            {
-                float progress = (Time.time - startTime) / HealthChangeDelay;
-                _currentHealth = Mathf.Lerp(_currentHealth, targetHealth, progress);
-                yield return null;
-            }
-
-            _currentHealth = targetHealth;
-            UpdateHealthBar();
-            OnHealthChanged?.Invoke(_currentHealth, MaxHealth);
-        }
-    }
-
-    public float GetCurrentHealth()
-    {
-        return _currentHealth;
-    }
-
-    public float GetMaxHealth()
-    {
-        return MaxHealth;
-    }
-
-    private void UpdateHealthBar()
-    {
-        OnHealthChanged?.Invoke(_currentHealth, MaxHealth);
+        HealthChanged?.Invoke(_currentHealth, _maxHealth);
     }
 }

@@ -8,15 +8,16 @@ public class HealthBar : MonoBehaviour
 
     private float _healthChangeDelay = 0.3f;
 
-    private void Start()
+    private void OnEnable()
     {
-        _health.OnHealthChanged += UpdateHealthBar;
-        UpdateHealthBar(_health.GetCurrentHealth(), _health.GetMaxHealth());
+        if (_health != null)
+            _health.HealthChanged += UpdateHealthBar;
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
-        _health.OnHealthChanged -= UpdateHealthBar;
+        if (_health != null)
+            _health.HealthChanged -= UpdateHealthBar;
     }
 
     private void UpdateHealthBar(float currentHealth, float maxHealth)

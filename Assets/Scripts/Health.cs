@@ -1,14 +1,17 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class Health : MonoBehaviour
 {
     private float _maxHealth = 100f;
     private float _minHealth = 0f;
+    private float _healthChangeDelay = 50f;
 
     private float _currentHealth;
 
-    public delegate void OnHealthChanged(float currentHealth, float maxHealth);
-    public event OnHealthChanged HealthChanged;
+    public event UnityAction<float, float> HealthChanged;
 
     private void Start()
     {
@@ -17,21 +20,24 @@ public class Health : MonoBehaviour
 
     public void Heal(float amount)
     {
-        _currentHealth += amount;
-
-        if (_currentHealth > _maxHealth)
-            _currentHealth = _maxHealth;
-
-        HealthChanged?.Invoke(_currentHealth, _maxHealth);
+        StartCoroutine(ChangeHealth(amount));
     }
 
     public void Damage(float amount)
     {
-        _currentHealth -= amount;
+        StartCoroutine(ChangeHealth(-amount));
+    }
 
-        if (_currentHealth < _minHealth)
-            _currentHealth = _minHealth;
+    private IEnumerator ChangeHealth(float amount)
+    {
+        float targetHealth = Mathf.Clamp(_currentHealth + amount, _minHealth, _maxHealth);
 
-        HealthChanged?.Invoke(_currentHealth, _maxHealth);
+        while (_currentHealth != targetHealth)
+        {
+            float newHealth = Mathf.MoveTowards(_currentHealth, targetHealth, Time.deltaTime * _healthChangeDelay);
+            HealthChanged?.Invoke(newHealth, _maxHealth);
+            _currentHealth = newHealth;
+            yield return null;
+        }
     }
 }
